@@ -75,7 +75,9 @@ router.post("/", csrfProtection, (req, res, next) => {
     .catch(next);
   }
 
-  const authHeader = Buffer.from(`${req.body.email}:${req.body.password}`).toString("base64");
+  // The mail address becomes the subject: "Kiwi@…" and "kiwi@…" must be the same user
+  const email = String(req.body.email || "").trim().toLowerCase();
+  const authHeader = Buffer.from(`${email}:${req.body.password}`).toString("base64");
 
   const authHostname = process.env.AUTH_HOSTNAME;
   const authPort = process.env.AUTH_PORT;
@@ -115,7 +117,7 @@ router.post("/", csrfProtection, (req, res, next) => {
     hydraAdmin.adminGetOAuth2LoginRequest(challenge)
       .then(({ data: loginRequest }) =>
         hydraAdmin.adminAcceptOAuth2LoginRequest(challenge, {
-          subject: req.body.email, // use the real email
+          subject: email,
           remember: Boolean(req.body.remember),
           remember_for: 3600,
           acr: oidcConformityMaybeFakeAcr(loginRequest, "0")

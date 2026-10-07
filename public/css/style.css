@@ -1,0 +1,79 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(to bottom right, #1e001f, #e83bf8);
+    font-family: 'Roboto', sans-serif;
+}
+
+.login-card {
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: rgb(46, 46, 46);
+    width: 360px;
+    color: #e0e0e0;
+}
+
+.error-msg {
+    color: #e53935;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+#login-title {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+/* Inputs */
+.input-field input[type="email"],
+.input-field input[type="password"] {
+    background-color: #1f1f1f;
+    border: 1px solid #333;
+    color: #e0e0e0;
+    border-radius: 4px;
+    padding: 0.5rem;
+}
+
+.input-field input:focus {
+    border-color: #bb86fc;
+    box-shadow: 0 0 0 1px #bb86fc;
+}
+
+.input-field label {
+    color: #bbbbbb;
+}
+
+.input-field input:focus + label {
+    color: #bb86fc;
+}
+
+/* Helper text */
+.helper-text {
+    color: #888 !important;
+}
+
+/* Checkbox label */
+p label span {
+    color: #e0e0e0;
+}
+
+/* Buttons */
+button.btn.waves-effect.waves-light {
+    background-color: #bb86fc;
+    color: #121212;
+}
+
+button.btn.red.waves-effect.waves-light {
+    background-color: #cf6679;
+    color: #121212;
+}
+
+/* Optional: adjust hover */
+button.btn:hover {
+    filter: brightness(1.1);
+}

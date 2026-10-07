@@ -1,0 +1,31 @@
+extends layout
+
+block content
+    .login-card
+        h1#login-title Login
+        if error
+            p.error-msg #{error}
+
+        form(action=action, method="POST")
+            input(type="hidden", name="_csrf", value=csrfToken)
+            input(type="hidden", name="challenge", value=challenge)
+
+            .input-field
+                input(type="email", id="email", name="email", value=hint, required)
+                label(for="email") Email
+                span.helper-text(data-error="Invalid email") Enter your email
+
+            .input-field
+                input(type="password", id="password", name="password", required)
+                label(for="password") Password
+                span.helper-text Enter your password
+
+            p
+                label
+                    input(type="checkbox", id="remember", name="remember", value="1")
+                    span Remember me
+
+            .buttons
+                button.btn.waves-effect.waves-light(type="submit", name="submit", value="Log in") Log in
+                button.btn.red.waves-effect.waves-light(type="submit", name="submit", value="Deny access") Deny access
+

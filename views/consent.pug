@@ -1,0 +1,48 @@
+extends layout
+
+block content
+    .login-card
+        h1#login-title Consent Request
+        // Hidden fields
+        form(action=action, method="POST")
+            input(type="hidden", name="challenge", value=challenge)
+            input(type="hidden", name="_csrf", value=csrfToken)
+
+            if client.logo_uri
+                img(src=client.logo_uri, class="responsive-img center-align", style="margin-bottom: 1rem; max-height: 80px;")
+
+            p(style="margin-bottom: 1rem;")
+                | Hi #{user}, application 
+                strong #{client.client_name || client.client_id} 
+                | wants to access resources on your behalf:
+
+            // Requested scopes
+            each scope in requested_scope
+                p
+                    label
+                        input(type="checkbox", class="grant_scope", id=scope, value=scope, name="grant_scope")
+                        span #{scope}
+
+            p(style="margin-top: 1rem;")
+                | Do you want to be asked next time when this application wants to access your data? 
+                | The application will not be able to ask for more permissions without your consent.
+
+            // Links
+            ul
+                if client.policy_uri
+                    li
+                        a(href=client.policy_uri, target="_blank") Policy
+                if client.tos_uri
+                    li
+                        a(href=client.tos_uri, target="_blank") Terms of Service
+
+            // Remember choice
+            p
+                label
+                    input(type="checkbox", id="remember", name="remember", value="1")
+                    span Do not ask me again
+
+            // Buttons
+            .buttons(style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;")
+                input.btn.waves-effect.waves-light(type="submit", id="accept", name="submit", value="Allow access")
+                input.btn.red.waves-effect.waves-light(type="submit", id="reject", name="submit", value="Deny access")        

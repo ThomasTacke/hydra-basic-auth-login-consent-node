@@ -17,6 +17,13 @@ const csrfProtection = csrf({
 })
 const router = express.Router()
 
+// ID token claims for the logged in user. The subject is the mail address used at login.
+const idTokenClaims = (subject: string = "") => ({
+  email: subject,
+  email_verified: true,
+  preferred_username: subject.includes("@") ? subject.split("@")[0] : subject,
+})
+
 router.get("/", csrfProtection, (req, res, next) => {
   // Parses the URL query
   const query = url.parse(req.url, true).query
@@ -44,8 +51,6 @@ router.get("/", csrfProtection, (req, res, next) => {
 
         // Now it's time to grant the consent request. You could also deny the request if something went terribly wrong
         console.log(body)
-        const email = body.subject || "";
-        const username = email.includes("@") ? email.split("@")[0] : email;
         return hydraAdmin
           .adminAcceptOAuth2ConsentRequest(challenge, {
             // We can grant all scopes that have been requested - hydra already checked for us that no additional scopes
@@ -62,11 +67,7 @@ router.get("/", csrfProtection, (req, res, next) => {
               // accessToken: { foo: 'bar' },
               // This data will be available in the ID token.
               // idToken: { baz: 'bar' },
-              id_token: {
-                email: email,
-                email_verified: true,
-                preferred_username: username
-              }
+              id_token: idTokenClaims(body.subject),
             },
           })
           .then(({ data: body }) => {
@@ -146,6 +147,8 @@ router.post("/", csrfProtection, (req, res, next) => {
     .adminGetOAuth2ConsentRequest(challenge)
     // This will be called if the HTTP request was successful
     .then(({ data: body }) => {
+      session.id_token = idTokenClaims(body.subject)
+
       return hydraAdmin
         .adminAcceptOAuth2ConsentRequest(challenge, {
           // We can grant all scopes that have been requested - hydra already checked for us that no additional scopes

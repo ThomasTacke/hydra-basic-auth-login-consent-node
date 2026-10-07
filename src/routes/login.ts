@@ -84,7 +84,7 @@ router.post("/", csrfProtection, (req, res, next) => {
   if (!authHostname)
     throw new Error("Environment variable AUTH_HOSTNAME not set");
   
-  if (authPort)
+  if (!authPort)
     throw new Error("Environment variable AUTH_PORT not set");
   
   const options = {

@@ -1,79 +1,213 @@
+/* Dark slate, matching the Homepage dashboard (Tailwind slate palette) */
+:root {
+  color-scheme: dark;
+  --bg-top: #1e293b;    /* slate-800 */
+  --bg-bottom: #0f172a; /* slate-900 */
+  --card: rgba(255, 255, 255, 0.05);
+  --border: rgba(148, 163, 184, 0.2);
+  --input: #0f172a;
+  --input-border: #475569; /* slate-600 */
+  --text: #e2e8f0;      /* slate-200 */
+  --muted: #94a3b8;     /* slate-400 */
+  --focus: #cbd5e1;     /* slate-300 */
+  --danger: #fca5a5;
+  --danger-bg: rgba(248, 113, 113, 0.12);
+  --radius: 10px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background: linear-gradient(to bottom right, #1e001f, #e83bf8);
-    font-family: 'Roboto', sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom)) fixed;
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
 }
 
-.login-card {
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    background-color: rgb(46, 46, 46);
-    width: 360px;
-    color: #e0e0e0;
+.card {
+  width: 100%;
+  max-width: 400px;
+  padding: 32px 28px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 }
 
-.error-msg {
-    color: #e53935;
-    margin-bottom: 1rem;
-    font-weight: 500;
+.brand {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-#login-title {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    font-weight: 500;
-    color: #ffffff;
+h1 {
+  margin: 0 0 4px;
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.25;
 }
 
-/* Inputs */
-.input-field input[type="email"],
-.input-field input[type="password"] {
-    background-color: #1f1f1f;
-    border: 1px solid #333;
-    color: #e0e0e0;
-    border-radius: 4px;
-    padding: 0.5rem;
+.subtitle {
+  margin: 0 0 24px;
+  color: var(--muted);
 }
 
-.input-field input:focus {
-    border-color: #bb86fc;
-    box-shadow: 0 0 0 1px #bb86fc;
+.subtitle strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
-.input-field label {
-    color: #bbbbbb;
+h1 + .alert {
+  margin-top: 16px;
 }
 
-.input-field input:focus + label {
-    color: #bb86fc;
+.alert {
+  margin: 0 0 20px;
+  padding: 10px 12px;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-radius: var(--radius);
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
-/* Helper text */
-.helper-text {
-    color: #888 !important;
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-/* Checkbox label */
-p label span {
-    color: #e0e0e0;
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-/* Buttons */
-button.btn.waves-effect.waves-light {
-    background-color: #bb86fc;
-    color: #121212;
+.field span {
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
-button.btn.red.waves-effect.waves-light {
-    background-color: #cf6679;
-    color: #121212;
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  background: var(--input);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px keeps iOS from zooming into the field */
 }
 
-/* Optional: adjust hover */
-button.btn:hover {
-    filter: brightness(1.1);
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px; /* comfortable tap target */
+  cursor: pointer;
+}
+
+.check input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--focus);
+}
+
+fieldset.scopes {
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+fieldset.scopes legend {
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.links {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.links a {
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+button {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--text);
+  color: var(--bg-bottom);
+}
+
+button.primary:hover {
+  background: #fff;
+}
+
+button.secondary {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+button.secondary:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+@media (max-width: 480px) {
+  body {
+    align-items: flex-start;
+    padding-top: 8vh;
+  }
+
+  .card {
+    padding: 24px 20px;
+  }
 }

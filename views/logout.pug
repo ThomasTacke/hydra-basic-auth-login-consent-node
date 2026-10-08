@@ -1,12 +1,14 @@
 extends layout
 
 block content
-    h1 Do you wish to log out?
-    if error
-        p.
-            #{error}
-    form(action=action,method="POST")
-        input(type="hidden",name="_csrf",value=csrfToken)
-        input(type="hidden",name="challenge",value=challenge)
-        input(type="submit",id="accept",value="Yes")
-        input(type="submit",id="reject",value="No")
+  h1 Sign out?
+  p.subtitle You will be signed out of all apps that use this login.
+  if error
+    p.alert(role="alert")= error
+
+  form(action=action, method="POST")
+    input(type="hidden", name="_csrf", value=csrfToken)
+    input(type="hidden", name="challenge", value=challenge)
+    .actions
+      button.primary(type="submit", id="accept", name="submit", value="Yes") Sign out
+      button.secondary(type="submit", id="reject", name="submit", value="No") Stay signed in

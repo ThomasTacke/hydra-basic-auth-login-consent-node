@@ -1,31 +1,30 @@
 extends layout
 
 block content
-    .login-card
-        h1#login-title Login
-        if error
-            p.error-msg #{error}
+  h1 Sign in
+  if clientName
+    p.subtitle to continue to #[strong= clientName]
 
-        form(action=action, method="POST")
-            input(type="hidden", name="_csrf", value=csrfToken)
-            input(type="hidden", name="challenge", value=challenge)
+  if error
+    p.alert(role="alert")= error
 
-            .input-field
-                input(type="email", id="email", name="email", value=hint, required)
-                label(for="email") Email
-                span.helper-text(data-error="Invalid email") Enter your email
+  form(action=action, method="POST")
+    input(type="hidden", name="_csrf", value=csrfToken)
+    input(type="hidden", name="challenge", value=challenge)
+    input(type="hidden", name="client_name", value=clientName)
 
-            .input-field
-                input(type="password", id="password", name="password", required)
-                label(for="password") Password
-                span.helper-text Enter your password
+    label.field
+      span Email
+      input(type="email", name="email", value=hint, required, autocomplete="username", autocapitalize="none", spellcheck="false", autofocus=!hint)
 
-            p
-                label
-                    input(type="checkbox", id="remember", name="remember", value="1")
-                    span Remember me
+    label.field
+      span Password
+      input(type="password", name="password", required, autocomplete="current-password", autofocus=!!hint)
 
-            .buttons
-                button.btn.waves-effect.waves-light(type="submit", name="submit", value="Log in") Log in
-                button.btn.red.waves-effect.waves-light(type="submit", name="submit", value="Deny access") Deny access
+    label.check
+      input(type="checkbox", name="remember", value="1")
+      span Keep me signed in
 
+    .actions
+      button.primary(type="submit", name="submit", value="Log in") Sign in
+      button.secondary(type="submit", name="submit", value="Deny access", formnovalidate) Cancel

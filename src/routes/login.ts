@@ -57,6 +57,7 @@ router.get("/", csrfProtection, (req, res, next) => {
         challenge: challenge,
         action: urljoin(process.env.BASE_URL || "", "/login"),
         hint: body.oidc_context?.login_hint || "",
+        clientName: body.client?.client_name || "",
       })
     })
     // This will handle any error that happens when making HTTP calls to hydra
@@ -105,12 +106,15 @@ router.post("/", csrfProtection, (req, res, next) => {
       return res.render("login", {
         csrfToken: req.csrfToken(),
         challenge,
-        error: "The username / password combination is not correct",
+        action: urljoin(process.env.BASE_URL || "", "/login"),
+        hint: email,
+        clientName: String(req.body.client_name || ""),
+        error: "Email or password is not correct.",
       });
     }
 
     if (response.statusCode && Math.floor(response.statusCode / 100) === 5) {
-      return res.render("error", { error: "Server error" });
+      return res.render("error", { title: "Error", message: "The mail server could not check the login. Please try again later." });
     }
 
     // success: continue Hydra login accept
@@ -128,7 +132,8 @@ router.post("/", csrfProtection, (req, res, next) => {
   });
 
   mailReq.on("error", (err) => {
-    res.render("error", { error: err.message });
+    console.error(err);
+    res.render("error", { title: "Error", message: "The mail server is not reachable. Please try again later." });
   });
 
   mailReq.end();

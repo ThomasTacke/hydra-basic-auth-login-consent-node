@@ -1,7 +1,6 @@
 extends layout
 
 block content
-  h1= message
-  
-  if error
-    pre #{error.stack}
+  h1 Something went wrong
+  p.alert(role="alert")= message || "The request could not be completed."
+  p.subtitle Go back to the app and try again.

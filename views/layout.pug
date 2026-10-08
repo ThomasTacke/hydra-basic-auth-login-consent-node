@@ -1,13 +1,12 @@
 doctype html
-html
+html(lang="en")
   head
-    title Hydra Login
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+    meta(name="color-scheme", content="dark")
+    title= (title ? title + " · " : "") + "s3r3nity"
     link(rel="stylesheet", href="/css/style.css")
-    // Include Materialize CSS from CDN
-    link(rel="stylesheet", href="/css/materialize.min.css")
   body
-    block content
-
-  block scripts
-    // Include Materialize JS
-    script(src="/js/materialize.min.js")
+    main.card
+      p.brand s3r3nity
+      block content

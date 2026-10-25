@@ -106,7 +106,8 @@ form {
 }
 
 input[type="email"],
-input[type="password"] {
+input[type="password"],
+input[type="text"] { /* text: the password while shown */
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--input-border);
@@ -115,6 +116,52 @@ input[type="password"] {
   color: var(--text);
   font: inherit;
   font-size: 16px; /* 16px keeps iOS from zooming into the field */
+}
+
+.password {
+  position: relative;
+}
+
+.password input {
+  padding-right: 52px; /* room for the eye button */
+}
+
+button.reveal {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 48px;
+  min-height: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--muted);
+}
+
+button.reveal[hidden] {
+  display: none;
+}
+
+button.reveal:hover {
+  color: var(--text);
+}
+
+button.reveal svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+button.reveal[aria-pressed="false"] .icon-hide,
+button.reveal[aria-pressed="true"] .icon-show {
+  display: none;
 }
 
 input:focus-visible,

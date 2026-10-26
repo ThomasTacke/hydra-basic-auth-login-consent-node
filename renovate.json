@@ -1,0 +1,42 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Berlin",
+  "schedule": ["* 0-5 * * 6"],
+  "pinDigests": true,
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 0,
+  "packageRules": [
+    {
+      "description": "Pin the Node image to its digest right away, don't wait for the weekly window",
+      "matchUpdateTypes": ["pinDigest"],
+      "schedule": ["at any time"]
+    },
+    {
+      "description": "Minor and patch updates of npm packages in one weekly PR",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "npm minor and patch"
+    },
+    {
+      "description": "npm majors usually need code changes and a login flow test: only on request from the Dependency Dashboard",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "The Hydra client follows the Hydra version on the server (bento-kx/server-setup): own PR, merge together with Hydra",
+      "matchPackageNames": ["@ory/hydra-client-fetch"],
+      "groupName": null,
+      "prBodyNotes": [
+        "⚠️ Keep this at the Hydra version running on the server (`oryd/hydra` in bento-kx/server-setup, Apps/hydra/compose.yml). Merge it together with that Hydra update, not before."
+      ]
+    },
+    {
+      "description": "Node image: LTS majors only (even numbers)",
+      "matchManagers": ["dockerfile"],
+      "matchPackageNames": ["node"],
+      "allowedVersions": "/^\\d*[02468]-alpine$/"
+    }
+  ]
+}

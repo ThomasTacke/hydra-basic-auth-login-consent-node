@@ -11,6 +11,8 @@ import routes from "./routes"
 import login from "./routes/login"
 import logout from "./routes/logout"
 import consent from "./routes/consent"
+import account from "./routes/account"
+import { cookieSecret } from "./secret"
 
 const app = express()
 
@@ -26,12 +28,13 @@ app.set("view engine", "pug")
 app.use(logger("dev"))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
-app.use(cookieParser())
+app.use(cookieParser(cookieSecret))
 
 app.use("/", routes)
 app.use("/login", login)
 app.use("/logout", logout)
 app.use("/consent", consent)
+app.use("/account", account)
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

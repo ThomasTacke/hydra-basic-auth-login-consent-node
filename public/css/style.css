@@ -243,6 +243,68 @@ button.secondary {
   color: var(--muted);
 }
 
+a.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a.button.secondary {
+  color: var(--muted);
+}
+
+a.button.secondary:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.actions.more {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.actions.more form {
+  display: contents;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.hint strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.notice {
+  margin: 0 0 20px;
+  padding: 10px 12px;
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  border-radius: var(--radius);
+  background: rgba(74, 222, 128, 0.1);
+  color: #86efac;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
 button.secondary:hover {
   color: var(--text);
   border-color: var(--muted);

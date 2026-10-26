@@ -1,0 +1,87 @@
+extends layout
+
+block content
+  h1 Organizations
+  p.subtitle Organization IDs must match Pangolin's. Mailboxes of the listed domains are members by default.
+
+  if saved
+    p.notice(role="status") Saved. Takes effect at the user's next sign-in.
+  if error
+    p.alert(role="alert")= error
+
+  each org in orgs
+    form.org(action="/account/admin/orgs", method="POST")
+      input(type="hidden", name="_csrf", value=csrfToken)
+      input(type="hidden", name="id", value=org.id)
+      .row
+        label.field
+          span ID
+          input(type="text", value=org.id, disabled)
+        label.field
+          span Name
+          input(type="text", name="name", value=org.name, maxlength="100")
+      label.field
+        span Mail domains
+        input(type="text", name="domains", value=org.domains, placeholder="example.org")
+      button.secondary(type="submit") Save
+      details.danger
+        summary Delete #{org.id}
+        p.hint Removes the organization and all its explicit memberships. Users lose it at their next sign-in.
+        button.secondary(type="submit", formaction="/account/admin/orgs/delete") Delete #{org.id}
+
+  details.add
+    summary Add organization
+    form.org(action="/account/admin/orgs", method="POST")
+      input(type="hidden", name="_csrf", value=csrfToken)
+      .row
+        label.field
+          span ID
+          input(type="text", name="id", required, pattern="[a-z0-9][a-z0-9-]*", placeholder="chaos-collision")
+        label.field
+          span Name
+          input(type="text", name="name", maxlength="100")
+      label.field
+        span Mail domains
+        input(type="text", name="domains", placeholder="chaos-collision.de")
+      button.primary(type="submit") Add
+
+  if orgs.length
+    h2 Members
+    each user in users
+      form.member(action="/account/admin/members", method="POST")
+        input(type="hidden", name="_csrf", value=csrfToken)
+        input(type="hidden", name="sub", value=user.sub)
+        p.who
+          strong= user.sub
+          span.hint= user.last_login_at ? " last sign-in " + user.last_login_at.slice(0, 10) : " not signed in yet"
+        .roles
+          each r in user.roles
+            label.field
+              span= r.org
+              select(name="role_" + r.org)
+                option(value="", selected=!r.explicit)= "Default (" + (r.byDomain === "member" ? "member" : "—") + ")"
+                option(value="admin", selected=r.explicit === "admin") Admin
+                option(value="member", selected=r.explicit === "member") Member
+                option(value="none", selected=r.explicit === "none") Not a member
+        button.secondary(type="submit") Save
+
+    details.add
+      summary Add someone before their first sign-in
+      form.member(action="/account/admin/members", method="POST")
+        input(type="hidden", name="_csrf", value=csrfToken)
+        label.field
+          span Mail address
+          input(type="email", name="sub", required, placeholder="name@example.org")
+        .roles
+          each org in orgs
+            label.field
+              span= org.id
+              select(name="role_" + org.id)
+                option(value="") Default
+                option(value="admin") Admin
+                option(value="member") Member
+                option(value="none") Not a member
+        button.primary(type="submit") Add
+
+  .actions.more
+    a.button.secondary(href="/account") Back to your account

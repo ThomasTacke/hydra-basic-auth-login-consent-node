@@ -23,6 +23,7 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  background: var(--bg-bottom); /* behind the fixed gradient on long pages */
 }
 
 body {
@@ -259,7 +260,99 @@ a.button.secondary {
   color: var(--muted);
 }
 
-a.button.secondary:hover {
+a..orgs {
+  margin: 24px 0 0;
+}
+
+.orgs .label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.orgs ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+/* Admin view: wider card, forms as panels */
+.card:has(form.org) {
+  max-width: 640px;
+}
+
+h2 {
+  margin: 32px 0 12px;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+form.org,
+form.member {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.roles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.who {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+select,
+input:disabled {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  background: var(--input);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+}
+
+input:disabled {
+  color: var(--muted);
+}
+
+details.danger summary {
+  color: var(--danger);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+details.danger[open] summary {
+  margin-bottom: 8px;
+}
+
+details.add {
+  margin-bottom: 16px;
+}
+
+details.add summary {
+  margin-bottom: 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+button.secondary:hover {
   color: var(--text);
   border-color: var(--muted);
 }

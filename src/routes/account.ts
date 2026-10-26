@@ -5,7 +5,7 @@
 import crypto from "crypto"
 import express from "express"
 import csrf from "csurf"
-import { getProfile, setName } from "../store"
+import { getProfile, orgsOf, setName } from "../store"
 import { posteUser } from "../poste"
 
 const router = express.Router()
@@ -30,7 +30,7 @@ const base64url = (buf: Buffer) => buf.toString("base64url")
 const localPart = (sub: string) => (sub.includes("@") ? sub.split("@")[0] : sub)
 
 // Returns the signed-in subject, or undefined
-const sessionSub = (req: express.Request): string | undefined => {
+export const sessionSub = (req: express.Request): string | undefined => {
   try {
     const session = JSON.parse(req.signedCookies[SESSION] || "null")
     if (session && typeof session.sub === "string" && session.exp > Date.now()) {
@@ -82,6 +82,7 @@ router.get("/", csrfProtection, (req, res) => {
     ownName: profile?.name || "",
     defaultName,
     isAdmin: Boolean(poste?.admin),
+    orgs: orgsOf(sub),
     saved: req.query.saved === "1",
     passwordUrl,
     dashboardUrl,

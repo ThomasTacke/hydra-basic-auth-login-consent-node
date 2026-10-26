@@ -22,3 +22,11 @@
 display name they can change (empty = the name from poste.io), a link to change the
 password in poste.io and "Sign out everywhere": that ends the account session and
 Hydra's login session; Hydra then sends the browser to its `urls.post_logout_redirect`.
+
+## Organizations
+
+poste.io's super admins manage organizations at `/account/admin`. An organization has an
+ID (use the same as in the app that reads it, e.g. Pangolin), a name and mail domains
+whose mailboxes are members by default. Explicit entries per user override that:
+*Admin*, *Member* or *Not a member*. With the `profile` scope the ID token carries
+`orgs` (IDs) and `groups` (`admin` for super admins, plus `<org>:admin` / `<org>:member`).

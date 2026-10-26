@@ -19,7 +19,19 @@ block content
     .actions
       button.primary(type="submit") Save
 
+  if orgs.length
+    .orgs
+      span.label Organizations
+      ul
+        each m in orgs
+          li
+            | #{m.org.name}
+            if m.role === "admin"
+              |  #[span.badge Admin]
+
   .actions.more
+    if isAdmin
+      a.button.secondary(href="/account/admin") Manage organizations
     a.button.secondary(href=passwordUrl) Change password
     form(action="/account/signout", method="POST")
       input(type="hidden", name="_csrf", value=csrfToken)

@@ -28,7 +28,7 @@
     "pug": "^3.0.3",
     "querystring": "^0.2.0",
     "serve-favicon": "^2.5.0",
-    "url-join": "^4.0.1"
+    "url-join": "^6.0.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

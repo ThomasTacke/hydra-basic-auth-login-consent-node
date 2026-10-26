@@ -260,7 +260,63 @@ a.button.secondary {
   color: var(--muted);
 }
 
-a..orgs {
+a..twofactor {
+  margin: 24px 0 0;
+}
+
+.twofactor .label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.twofactor p {
+  margin: 6px 0 12px;
+  color: var(--muted);
+}
+
+.twofactor details summary {
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.twofactor details[open] summary {
+  margin-bottom: 12px;
+}
+
+.qr {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 16px;
+}
+
+.qr img {
+  padding: 10px;
+  border-radius: var(--radius);
+  background: #fff; /* scanners need a light quiet zone */
+}
+
+.key {
+  margin: 4px 0 20px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  overflow-wrap: anywhere;
+}
+
+ul.codes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  margin: 0 0 20px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  list-style: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.05rem;
+}
+
+.orgs {
   margin: 24px 0 0;
 }
 

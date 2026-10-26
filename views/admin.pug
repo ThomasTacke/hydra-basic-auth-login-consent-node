@@ -1,7 +1,7 @@
 extends layout
 
 block content
-  h1 Organizations
+  h1 Users and organizations
   p.subtitle Organization IDs must match Pangolin's. Mailboxes of the listed domains are members by default.
 
   if saved
@@ -45,15 +45,17 @@ block content
         input(type="text", name="domains", placeholder="chaos-collision.de")
       button.primary(type="submit") Add
 
-  if orgs.length
-    h2 Members
-    each user in users
-      form.member(action="/account/admin/members", method="POST")
-        input(type="hidden", name="_csrf", value=csrfToken)
-        input(type="hidden", name="sub", value=user.sub)
-        p.who
-          strong= user.sub
-          span.hint= user.last_login_at ? " last sign-in " + user.last_login_at.slice(0, 10) : " not signed in yet"
+  h2= orgs.length ? "Members" : "Users"
+  each user in users
+    form.member(action="/account/admin/members", method="POST")
+      input(type="hidden", name="_csrf", value=csrfToken)
+      input(type="hidden", name="sub", value=user.sub)
+      p.who
+        strong= user.sub
+        span.hint= user.last_login_at ? " last sign-in " + user.last_login_at.slice(0, 10) : " not signed in yet"
+        if user.totp
+          |  #[span.badge 2FA]
+      if orgs.length
         .roles
           each r in user.roles
             label.field
@@ -64,7 +66,13 @@ block content
                 option(value="member", selected=r.explicit === "member") Member
                 option(value="none", selected=r.explicit === "none") Not a member
         button.secondary(type="submit") Save
+      if user.totp
+        details.danger
+          summary Reset two-factor login
+          p.hint For a lost phone and lost recovery codes: the user signs in with the password only and can set it up again.
+          button.secondary(type="submit", formaction="/account/admin/totp/reset") Reset two-factor login for #{user.sub}
 
+  if orgs.length
     details.add
       summary Add someone before their first sign-in
       form.member(action="/account/admin/members", method="POST")

@@ -1,0 +1,22 @@
+extends layout
+
+block content
+  h1 Set up two-factor login
+  p.subtitle Scan the code with an authenticator app (e.g. Aegis, 2FAS, Google Authenticator, a password manager), then enter the 6-digit code it shows.
+
+  if error
+    p.alert(role="alert")= error
+
+  .qr
+    img(src=qr, alt="QR code for your authenticator app", width="220", height="220")
+  p.hint Can't scan it? Enter this key instead:
+  p.key= key
+
+  form(action="/account/totp", method="POST")
+    input(type="hidden", name="_csrf", value=csrfToken)
+    label.field
+      span Code from the app
+      input(type="text", name="code", required, autofocus, inputmode="numeric", autocomplete="one-time-code", maxlength="10")
+    .actions
+      button.primary(type="submit") Turn on
+      a.button.secondary(href="/account") Cancel

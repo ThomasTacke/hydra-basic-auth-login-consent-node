@@ -42,11 +42,30 @@ if (schemaVersion() < 2) {
   `)
 }
 
+if (schemaVersion() < 3) {
+  db.exec(`
+    ALTER TABLE profiles ADD COLUMN totp_secret TEXT;        -- encrypted; NULL = no two-factor login
+    ALTER TABLE profiles ADD COLUMN totp_last_step INTEGER;  -- last accepted time step (no replay)
+    ALTER TABLE profiles ADD COLUMN totp_failures INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE profiles ADD COLUMN totp_locked_until INTEGER; -- ms since epoch
+    CREATE TABLE IF NOT EXISTS recovery_codes (
+      sub TEXT NOT NULL,
+      hash TEXT NOT NULL,
+      PRIMARY KEY (sub, hash)
+    );
+    PRAGMA user_version = 3;
+  `)
+}
+
 export interface Profile {
   sub: string
   name: string | null
   created_at: string
   last_login_at: string
+  totp_secret: string | null
+  totp_last_step: number | null
+  totp_failures: number
+  totp_locked_until: number | null
 }
 
 const upsertLogin = db.prepare(`
@@ -136,3 +155,73 @@ export const orgsOf = (sub: string) => {
     .map((org) => ({ org, role: explicit.get(org.id) ?? defaultRole(sub, org) }))
     .filter((m) => m.role !== "none") as { org: Org; role: "admin" | "member" }[]
 }
+
+// ---- Two-factor login (TOTP and recovery codes)
+
+const MAX_FAILURES = 5
+const LOCK_MS = 15 * 60 * 1000
+
+const transaction = (work: () => void) => {
+  db.exec("BEGIN")
+  try {
+    work()
+    db.exec("COMMIT")
+  } catch (err) {
+    db.exec("ROLLBACK")
+    throw err
+  }
+}
+
+const setTotpColumns = db.prepare(`
+  UPDATE profiles SET totp_secret = ?, totp_last_step = ?, totp_failures = 0, totp_locked_until = NULL
+  WHERE sub = ?
+`)
+const deleteCodes = db.prepare("DELETE FROM recovery_codes WHERE sub = ?")
+const insertCode = db.prepare("INSERT OR IGNORE INTO recovery_codes (sub, hash) VALUES (?, ?)")
+const deleteCode = db.prepare("DELETE FROM recovery_codes WHERE sub = ? AND hash = ?")
+const countCodes = db.prepare("SELECT COUNT(*) AS n FROM recovery_codes WHERE sub = ?")
+const updateStep = db.prepare("UPDATE profiles SET totp_last_step = ?, totp_failures = 0 WHERE sub = ?")
+const resetFailures = db.prepare("UPDATE profiles SET totp_failures = 0 WHERE sub = ?")
+const addFailure = db.prepare(`
+  UPDATE profiles SET
+    totp_locked_until = CASE WHEN totp_failures + 1 >= ? THEN ? ELSE totp_locked_until END,
+    totp_failures = CASE WHEN totp_failures + 1 >= ? THEN 0 ELSE totp_failures + 1 END
+  WHERE sub = ?
+`)
+
+export const hasTotp = (sub: string) => Boolean(getProfile(sub)?.totp_secret)
+
+export const isTotpLocked = (sub: string) => (getProfile(sub)?.totp_locked_until || 0) > Date.now()
+
+export const enableTotp = (sub: string, encryptedSecret: string, step: number, codeHashes: string[]) =>
+  transaction(() => {
+    setTotpColumns.run(encryptedSecret, step, sub)
+    replaceCodes(sub, codeHashes)
+  })
+
+export const disableTotp = (sub: string) =>
+  transaction(() => {
+    setTotpColumns.run(null, null, sub)
+    deleteCodes.run(sub)
+  })
+
+const replaceCodes = (sub: string, codeHashes: string[]) => {
+  deleteCodes.run(sub)
+  for (const hash of codeHashes) insertCode.run(sub, hash)
+}
+
+export const replaceRecoveryCodes = (sub: string, codeHashes: string[]) => transaction(() => replaceCodes(sub, codeHashes))
+
+export const recoveryCodesLeft = (sub: string) => (countCodes.get(sub) as { n: number }).n
+
+export const acceptTotpStep = (sub: string, step: number) => updateStep.run(step, sub)
+
+// true if the code existed; it is used up either way
+export const useRecoveryCode = (sub: string, hash: string) => {
+  const used = Number(deleteCode.run(sub, hash).changes) > 0
+  if (used) resetFailures.run(sub)
+  return used
+}
+
+// After MAX_FAILURES wrong codes in a row, two-factor login is locked for LOCK_MS
+export const recordTotpFailure = (sub: string) => addFailure.run(MAX_FAILURES, Date.now() + LOCK_MS, MAX_FAILURES, sub)

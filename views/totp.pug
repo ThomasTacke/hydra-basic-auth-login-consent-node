@@ -1,0 +1,22 @@
+extends layout
+
+block content
+  h1 Two-factor login
+  if clientName
+    p.subtitle to continue to #[strong= clientName]
+  else
+    p.subtitle Enter the code from your authenticator app.
+
+  if error
+    p.alert(role="alert")= error
+
+  form(action=action, method="POST")
+    input(type="hidden", name="_csrf", value=csrfToken)
+    input(type="hidden", name="client_name", value=clientName)
+    label.field
+      span Code
+      input(type="text", name="code", required, autofocus, inputmode="numeric", autocomplete="one-time-code", maxlength="20", autocapitalize="none", spellcheck="false")
+      small.hint Phone lost? Enter one of your recovery codes instead.
+    .actions
+      button.primary(type="submit", name="submit", value="Verify") Verify
+      button.secondary(type="submit", name="submit", value="Cancel", formnovalidate) Cancel

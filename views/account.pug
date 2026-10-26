@@ -9,6 +9,8 @@ block content
 
   if saved
     p.notice(role="status") Saved. Apps take the new name at your next sign-in.
+  if done
+    p.notice(role="status")= done
 
   form(action="/account", method="POST")
     input(type="hidden", name="_csrf", value=csrfToken)
@@ -29,9 +31,28 @@ block content
             if m.role === "admin"
               |  #[span.badge Admin]
 
+  .twofactor
+    span.label Two-factor login
+    if totp
+      p
+        | On. #{codesLeft} recovery code#{codesLeft === 1 ? "" : "s"} left.
+      details
+        summary New recovery codes or turn off
+        form(action="/account/totp/codes", method="POST")
+          input(type="hidden", name="_csrf", value=csrfToken)
+          label.field
+            span Current code (app or recovery code)
+            input(type="text", name="code", required, inputmode="numeric", autocomplete="one-time-code", maxlength="20")
+          .actions
+            button.secondary(type="submit") New recovery codes
+            button.secondary(type="submit", formaction="/account/totp/disable") Turn off two-factor login
+    else
+      p Off. With it, signing in asks for a code from your phone after the password, for all apps.
+      a.button.secondary(href="/account/totp") Set up two-factor login
+
   .actions.more
     if isAdmin
-      a.button.secondary(href="/account/admin") Manage organizations
+      a.button.secondary(href="/account/admin") Manage users and organizations
     a.button.secondary(href=passwordUrl) Change password
     form(action="/account/signout", method="POST")
       input(type="hidden", name="_csrf", value=csrfToken)

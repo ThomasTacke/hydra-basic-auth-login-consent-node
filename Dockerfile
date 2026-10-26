@@ -17,6 +17,9 @@ COPY --from=build /usr/src/app/dist ./dist
 COPY views ./views
 COPY public ./public
 
+# Profile store (mount a volume here) and the poste.io export (read-only mount)
+RUN mkdir -p /data /claims && chown node:node /data
+
 # Unprivileged user that comes with the node image
 USER node
 EXPOSE 3000

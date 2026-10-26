@@ -5,6 +5,7 @@ import express from "express"
 import urljoin from "url-join"
 import csrf from "csurf"
 import { hydraAdmin } from "../config"
+import { recordLogin } from "../store"
 import { oidcConformityMaybeFakeAcr } from "./stub/oidc-cert"
 import https from "https";
 
@@ -33,6 +34,8 @@ router.get("/", csrfProtection, (req, res, next) => {
       if (body.skip) {
         // You can apply logic here, for example update the number of times the user logged in.
         // ...
+
+        recordLogin(String(body.subject))
 
         // Now it's time to grant the login request. You could also deny the request if something went terribly wrong
         // (e.g. your arch-enemy logging in...)
@@ -120,6 +123,7 @@ router.post("/", csrfProtection, (req, res, next) => {
     }
 
     // success: continue Hydra login accept
+    recordLogin(email)
     hydraAdmin.getOAuth2LoginRequest({ loginChallenge: challenge })
       .then((loginRequest) =>
         hydraAdmin.acceptOAuth2LoginRequest({ loginChallenge: challenge, acceptOAuth2LoginRequest: {

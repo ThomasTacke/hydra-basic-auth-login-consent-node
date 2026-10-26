@@ -5,6 +5,7 @@ import express from "express"
 import urljoin from "url-join"
 import csrf from "csurf"
 import { hydraAdmin } from "../config"
+import { idTokenClaims } from "../claims"
 import { oidcConformityMaybeFakeSession } from "./stub/oidc-cert"
 import { AcceptOAuth2ConsentRequestSession } from "@ory/hydra-client-fetch"
 
@@ -15,13 +16,6 @@ const csrfProtection = csrf({
   },
 })
 const router = express.Router()
-
-// ID token claims for the logged in user. The subject is the mail address used at login.
-const idTokenClaims = (subject: string = "") => ({
-  email: subject,
-  email_verified: true,
-  preferred_username: subject.includes("@") ? subject.split("@")[0] : subject,
-})
 
 router.get("/", csrfProtection, (req, res, next) => {
   // The challenge is used to fetch information about the consent request from ORY hydraAdmin.
@@ -60,7 +54,7 @@ router.get("/", csrfProtection, (req, res, next) => {
               // accessToken: { foo: 'bar' },
               // This data will be available in the ID token.
               // idToken: { baz: 'bar' },
-              id_token: idTokenClaims(body.subject),
+              id_token: idTokenClaims(body.subject, body.requested_scope),
             },
           } })
           .then((body) => {
@@ -143,7 +137,7 @@ router.post("/", csrfProtection, (req, res, next) => {
     .getOAuth2ConsentRequest({ consentChallenge: challenge })
     // This will be called if the HTTP request was successful
     .then((body) => {
-      session.id_token = idTokenClaims(body.subject)
+      session.id_token = idTokenClaims(body.subject, grantScope)
 
       return hydraAdmin
         .acceptOAuth2ConsentRequest({ consentChallenge: challenge, acceptOAuth2ConsentRequest: {

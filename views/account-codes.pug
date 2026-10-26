@@ -1,0 +1,12 @@
+extends layout
+
+block content
+  h1 Recovery codes
+  p.subtitle Each code works once, instead of a code from your phone. Save them now (password manager, or print them): they are not shown again.
+
+  ul.codes
+    each code in codes
+      li= code
+
+  .actions
+    a.button.secondary(href="/account") Done

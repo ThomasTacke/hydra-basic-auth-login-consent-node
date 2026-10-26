@@ -7,6 +7,8 @@ import { sessionSub } from "./account"
 import { posteUser } from "../poste"
 import {
   defaultRole,
+  disableTotp,
+  hasTotp,
   deleteOrg,
   listMemberships,
   listOrgs,
@@ -42,6 +44,7 @@ router.get("/", csrfProtection, (req, res) => {
   const explicit = new Map(listMemberships().map((m) => [`${m.sub} ${m.org}`, m.role]))
   const users = listUsers().map((u) => ({
     ...u,
+    totp: hasTotp(u.sub),
     roles: orgs.map((org) => ({
       org: org.id,
       explicit: explicit.get(`${u.sub} ${org.id}`) || "",
@@ -49,7 +52,7 @@ router.get("/", csrfProtection, (req, res) => {
     })),
   }))
   res.render("admin", {
-    title: "Organizations",
+    title: "Users and organizations",
     csrfToken: req.csrfToken(),
     orgs,
     users,
@@ -91,6 +94,13 @@ router.post("/members", csrfProtection, (req, res) => {
     const role = String(req.body[`role_${org.id}`] ?? "")
     setMembership(sub, org.id, ROLES.includes(role) ? (role as Role) : null)
   }
+  res.redirect("/account/admin?saved=1")
+})
+
+// Lost phone and recovery codes: the user signs in with the password again and can set
+// up two-factor login anew
+router.post("/totp/reset", csrfProtection, (req, res) => {
+  disableTotp(String(req.body.sub || ""))
   res.redirect("/account/admin?saved=1")
 })
 

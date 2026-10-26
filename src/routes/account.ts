@@ -5,7 +5,11 @@
 import crypto from "crypto"
 import express from "express"
 import csrf from "csurf"
-import { getProfile, orgsOf, setName } from "../store"
+import QRCode from "qrcode"
+import { disableTotp, enableTotp, getProfile, hasTotp, orgsOf, recoveryCodesLeft, replaceRecoveryCodes, setName } from "../store"
+import { secretConfigured } from "../secret"
+import { currentStep, encryptSecret, generateRecoveryCodes, generateSecret, hashRecoveryCode, otpauthUrl, verifyCode } from "../totp"
+import { checkSecondFactor, secondFactorError } from "../twofactor"
 import { posteUser } from "../poste"
 
 const router = express.Router()
@@ -21,7 +25,11 @@ const redirectUri = `${loginOrigin}/account/callback`
 const dashboardUrl = process.env.DASHBOARD_URL || "/"
 const passwordUrl = process.env.PASSWORD_URL || `https://${process.env.AUTH_HOSTNAME}/admin/my/edit`
 
+// Name of the account in authenticator apps, e.g. "s3r3nity.org"
+const totpIssuer = process.env.TOTP_ISSUER || (issuer ? new URL(issuer).hostname.replace(/^auth\./, "") : "SSO")
+
 const SESSION = "account_session"
+const SETUP = "account_totp_setup"
 const LOGIN = "account_login"
 // secure on https (production); plain http only in local tests
 const cookieBase = { httpOnly: true, secure: loginOrigin.startsWith("https:"), sameSite: "lax" as const, path: "/account", signed: true }
@@ -84,6 +92,9 @@ router.get("/", csrfProtection, (req, res) => {
     isAdmin: Boolean(poste?.admin),
     orgs: orgsOf(sub),
     saved: req.query.saved === "1",
+    done: typeof req.query.done === "string" ? req.query.done : "",
+    totp: hasTotp(sub),
+    codesLeft: recoveryCodesLeft(sub),
     passwordUrl,
     dashboardUrl,
   })
@@ -164,6 +175,79 @@ router.post("/", csrfProtection, (req, res) => {
 router.post("/signout", csrfProtection, (req, res) => {
   res.clearCookie(SESSION, cookieBase)
   res.redirect(new URL("oauth2/sessions/logout", issuer).toString())
+})
+
+// ---- Two-factor login
+
+const requireSession = (req: express.Request, res: express.Response) => {
+  const sub = sessionSub(req)
+  if (!sub) res.redirect("/account")
+  return sub
+}
+
+const renderSetup = async (req: express.Request, res: express.Response, sub: string, secret: string, error: string) =>
+  res.render("account-totp", {
+    title: "Set up two-factor login",
+    csrfToken: req.csrfToken(),
+    qr: await QRCode.toDataURL(otpauthUrl(secret, sub, totpIssuer), { margin: 1, width: 220 }),
+    key: secret.match(/.{1,4}/g)?.join(" "),
+    error,
+  })
+
+const renderCodes = (req: express.Request, res: express.Response, codes: string[]) =>
+  res.render("account-codes", { title: "Recovery codes", codes })
+
+router.get("/totp", csrfProtection, async (req, res, next) => {
+  try {
+    const sub = requireSession(req, res)
+    if (!sub) return
+    if (!secretConfigured) throw new Error("SECRETS_SYSTEM is not set, so two-factor login can't be set up.")
+    if (hasTotp(sub)) return res.redirect("/account")
+    // The new secret stays in a signed cookie until the user has confirmed a code
+    const secret = generateSecret()
+    res.cookie(SETUP, secret, { ...cookieBase, maxAge: 10 * 60 * 1000 })
+    await renderSetup(req, res, sub, secret, "")
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post("/totp", csrfProtection, async (req, res, next) => {
+  try {
+    const sub = requireSession(req, res)
+    if (!sub) return
+    const secret = req.signedCookies[SETUP]
+    if (typeof secret !== "string" || !secret) return res.redirect("/account/totp")
+    const step = verifyCode(secret, String(req.body.code || ""))
+    if (step === null) return renderSetup(req, res, sub, secret, "The code is not correct. Check the time on your phone and try again.")
+
+    const codes = generateRecoveryCodes()
+    enableTotp(sub, encryptSecret(secret), step, codes.map((code) => hashRecoveryCode(sub, code)))
+    res.clearCookie(SETUP, cookieBase)
+    renderCodes(req, res, codes)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// New recovery codes and turning it off both need a current code
+router.post("/totp/codes", csrfProtection, (req, res) => {
+  const sub = requireSession(req, res)
+  if (!sub) return
+  const result = checkSecondFactor(sub, String(req.body.code || ""))
+  if (result !== "ok") return res.redirect("/account?done=" + encodeURIComponent(secondFactorError(result)))
+  const codes = generateRecoveryCodes()
+  replaceRecoveryCodes(sub, codes.map((code) => hashRecoveryCode(sub, code)))
+  renderCodes(req, res, codes)
+})
+
+router.post("/totp/disable", csrfProtection, (req, res) => {
+  const sub = requireSession(req, res)
+  if (!sub) return
+  const result = checkSecondFactor(sub, String(req.body.code || ""))
+  if (result !== "ok") return res.redirect("/account?done=" + encodeURIComponent(secondFactorError(result)))
+  disableTotp(sub)
+  res.redirect("/account?done=" + encodeURIComponent("Two-factor login is off."))
 })
 
 export default router

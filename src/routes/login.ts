@@ -5,7 +5,9 @@ import express from "express"
 import urljoin from "url-join"
 import csrf from "csurf"
 import { hydraAdmin } from "../config"
-import { recordLogin } from "../store"
+import { hasTotp, recordLogin } from "../store"
+import { secureCookies } from "../secret"
+import { checkSecondFactor, secondFactorError } from "../twofactor"
 import { oidcConformityMaybeFakeAcr } from "./stub/oidc-cert"
 import https from "https";
 
@@ -124,17 +126,18 @@ router.post("/", csrfProtection, (req, res, next) => {
 
     // success: continue Hydra login accept
     recordLogin(email)
-    hydraAdmin.getOAuth2LoginRequest({ loginChallenge: challenge })
-      .then((loginRequest) =>
-        hydraAdmin.acceptOAuth2LoginRequest({ loginChallenge: challenge, acceptOAuth2LoginRequest: {
-          subject: email,
-          remember: Boolean(req.body.remember),
-          remember_for: 3600,
-          acr: oidcConformityMaybeFakeAcr(loginRequest, "0")
-        } })
-      )
-      .then((data) => res.redirect(String(data.redirect_to)))
-      .catch(next);
+    const remember = Boolean(req.body.remember)
+
+    // Two-factor login set up: ask for the code first, the password check is kept in a
+    // signed cookie for 5 minutes
+    if (hasTotp(email)) {
+      res.cookie(PENDING, JSON.stringify({ challenge, email, remember, exp: Date.now() + PENDING_MS }), {
+        httpOnly: true, secure: secureCookies, sameSite: "lax", path: "/login", signed: true, maxAge: PENDING_MS,
+      })
+      return renderSecondFactor(req, res, String(req.body.client_name || ""), "")
+    }
+
+    acceptLogin(challenge, email, remember, ["pwd"], res, next)
   });
 
   mailReq.on("error", (err) => {
@@ -144,5 +147,66 @@ router.post("/", csrfProtection, (req, res, next) => {
 
   mailReq.end();
 });
+
+const PENDING = "login_2fa"
+const PENDING_MS = 5 * 60 * 1000
+
+const renderSecondFactor = (req: express.Request, res: express.Response, clientName: string, error: string) =>
+  res.render("totp", {
+    title: "Two-factor login",
+    csrfToken: req.csrfToken(),
+    action: urljoin(process.env.BASE_URL || "", "/login/totp"),
+    clientName,
+    error,
+  })
+
+const acceptLogin = (
+  challenge: string, email: string, remember: boolean, amr: string[],
+  res: express.Response, next: express.NextFunction,
+) =>
+  hydraAdmin.getOAuth2LoginRequest({ loginChallenge: challenge })
+    .then((loginRequest) =>
+      hydraAdmin.acceptOAuth2LoginRequest({ loginChallenge: challenge, acceptOAuth2LoginRequest: {
+        subject: email,
+        remember,
+        remember_for: 3600,
+        acr: oidcConformityMaybeFakeAcr(loginRequest, "0"),
+        // How the user signed in, e.g. ["pwd", "otp"]; ends up in the ID token
+        amr,
+      } })
+    )
+    .then((data) => res.redirect(String(data.redirect_to)))
+    .catch(next)
+
+router.post("/totp", csrfProtection, (req, res, next) => {
+  let pending: { challenge?: string; email?: string; remember?: boolean; exp?: number } = {}
+  try {
+    pending = JSON.parse(req.signedCookies[PENDING] || "{}")
+  } catch {
+    // handled below
+  }
+  if (!pending.challenge || !pending.email || !pending.exp || pending.exp < Date.now()) {
+    res.clearCookie(PENDING, { path: "/login" })
+    return res.render("error", { title: "Error", message: "The sign-in has expired. Go back to the app and sign in again." })
+  }
+
+  if (req.body.submit === "Cancel") {
+    res.clearCookie(PENDING, { path: "/login" })
+    return hydraAdmin.rejectOAuth2LoginRequest({
+      loginChallenge: pending.challenge,
+      rejectOAuth2Request: { error: "access_denied", error_description: "The resource owner denied the request" },
+    })
+      .then((data) => res.redirect(String(data.redirect_to)))
+      .catch(next)
+  }
+
+  const result = checkSecondFactor(pending.email, String(req.body.code || ""))
+  if (result !== "ok") {
+    return renderSecondFactor(req, res, String(req.body.client_name || ""), secondFactorError(result))
+  }
+
+  res.clearCookie(PENDING, { path: "/login" })
+  acceptLogin(pending.challenge, pending.email, Boolean(pending.remember), ["pwd", "otp"], res, next)
+})
 
 export default router

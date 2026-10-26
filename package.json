@@ -17,7 +17,7 @@
   },
   "prettier": "ory-prettier-styles",
   "dependencies": {
-    "@ory/client": "^0.2.0-alpha.24",
+    "@ory/hydra-client-fetch": "^26.2.0",
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.5",
     "csurf": "^1.11.0",
@@ -43,7 +43,7 @@
     "prettier": "^2.7.1",
     "prettier-plugin-packagejson": "^2.2.18",
     "ts-node-dev": "^1.0.0-pre.43",
-    "typescript": "^3.7.5"
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=24"

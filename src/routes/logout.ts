@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import express from "express"
-import url from "url"
 import urljoin from "url-join"
 import csrf from "csurf"
 import { hydraAdmin } from "../config"
@@ -12,18 +11,15 @@ const csrfProtection = csrf({ cookie: true })
 const router = express.Router()
 
 router.get("/", csrfProtection, (req, res, next) => {
-  // Parses the URL query
-  const query = url.parse(req.url, true).query
-
   // The challenge is used to fetch information about the logout request from ORY Hydra.
-  const challenge = String(query.logout_challenge)
-  if (!challenge) {
+  const challenge = req.query.logout_challenge
+  if (typeof challenge !== "string" || !challenge) {
     next(new Error("Expected a logout challenge to be set but received none."))
     return
   }
 
   hydraAdmin
-    .adminGetOAuth2LogoutRequest(challenge)
+    .getOAuth2LogoutRequest({ logoutChallenge: challenge })
     // This will be called if the HTTP request was successful
     .then(() => {
       // Here we have access to e.g. response.subject, response.sid, ...
@@ -46,7 +42,7 @@ router.post("/", csrfProtection, (req, res, next) => {
   if (req.body.submit === "No") {
     return (
       hydraAdmin
-        .adminRejectOAuth2LogoutRequest(challenge)
+        .rejectOAuth2LogoutRequest({ logoutChallenge: challenge })
         .then(() => {
           // The user did not want to log out. Let's redirect him back somewhere or do something else.
           res.redirect("https://www.ory.sh/")
@@ -58,8 +54,8 @@ router.post("/", csrfProtection, (req, res, next) => {
 
   // The user agreed to log out, let's accept the logout request.
   hydraAdmin
-    .adminAcceptOAuth2LogoutRequest(challenge)
-    .then(({ data: body }) => {
+    .acceptOAuth2LogoutRequest({ logoutChallenge: challenge })
+    .then((body) => {
       // All we need to do now is to redirect the user back to hydra!
       res.redirect(String(body.redirect_to))
     })

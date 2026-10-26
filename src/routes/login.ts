@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import express from "express"
-import url from "url"
 import urljoin from "url-join"
 import csrf from "csurf"
 import { hydraAdmin } from "../config"
@@ -19,19 +18,16 @@ const csrfProtection = csrf({
 const router = express.Router()
 
 router.get("/", csrfProtection, (req, res, next) => {
-  // Parses the URL query
-  const query = url.parse(req.url, true).query
-
   // The challenge is used to fetch information about the login request from ORY Hydra.
-  const challenge = String(query.login_challenge)
-  if (!challenge) {
+  const challenge = req.query.login_challenge
+  if (typeof challenge !== "string" || !challenge) {
     next(new Error("Expected a login challenge to be set but received none."))
     return
   }
 
   hydraAdmin
-    .adminGetOAuth2LoginRequest(challenge)
-    .then(({ data: body }) => {
+    .getOAuth2LoginRequest({ loginChallenge: challenge })
+    .then((body) => {
       // If hydra was already able to authenticate the user, skip will be true and we do not need to re-authenticate
       // the user.
       if (body.skip) {
@@ -41,11 +37,14 @@ router.get("/", csrfProtection, (req, res, next) => {
         // Now it's time to grant the login request. You could also deny the request if something went terribly wrong
         // (e.g. your arch-enemy logging in...)
         return hydraAdmin
-          .adminAcceptOAuth2LoginRequest(challenge, {
-            // All we need to do is to confirm that we indeed want to log in the user.
-            subject: String(body.subject),
+          .acceptOAuth2LoginRequest({
+            loginChallenge: challenge,
+            acceptOAuth2LoginRequest: {
+              // All we need to do is to confirm that we indeed want to log in the user.
+              subject: String(body.subject),
+            },
           })
-          .then(({ data: body }) => {
+          .then((body) => {
             // All we need to do now is to redirect the user back to hydra!
             res.redirect(String(body.redirect_to))
           })
@@ -68,11 +67,14 @@ router.post("/", csrfProtection, (req, res, next) => {
   const challenge = req.body.challenge;
 
   if (req.body.submit === "Deny access") {
-    return hydraAdmin.adminRejectOAuth2LoginRequest(challenge, {
-      error: "access_denied",
-      error_description: "The resource owner denied the request",
+    return hydraAdmin.rejectOAuth2LoginRequest({
+      loginChallenge: challenge,
+      rejectOAuth2Request: {
+        error: "access_denied",
+        error_description: "The resource owner denied the request",
+      },
     })
-    .then(({ data }) => res.redirect(String(data.redirect_to)))
+    .then((data) => res.redirect(String(data.redirect_to)))
     .catch(next);
   }
 
@@ -118,16 +120,16 @@ router.post("/", csrfProtection, (req, res, next) => {
     }
 
     // success: continue Hydra login accept
-    hydraAdmin.adminGetOAuth2LoginRequest(challenge)
-      .then(({ data: loginRequest }) =>
-        hydraAdmin.adminAcceptOAuth2LoginRequest(challenge, {
+    hydraAdmin.getOAuth2LoginRequest({ loginChallenge: challenge })
+      .then((loginRequest) =>
+        hydraAdmin.acceptOAuth2LoginRequest({ loginChallenge: challenge, acceptOAuth2LoginRequest: {
           subject: email,
           remember: Boolean(req.body.remember),
           remember_for: 3600,
           acr: oidcConformityMaybeFakeAcr(loginRequest, "0")
-        })
+        } })
       )
-      .then(({ data }) => res.redirect(String(data.redirect_to)))
+      .then((data) => res.redirect(String(data.redirect_to)))
       .catch(next);
   });
 

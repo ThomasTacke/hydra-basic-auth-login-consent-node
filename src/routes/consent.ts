@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import express from "express"
-import url from "url"
 import urljoin from "url-join"
 import csrf from "csurf"
 import { hydraAdmin } from "../config"
 import { oidcConformityMaybeFakeSession } from "./stub/oidc-cert"
-import { AcceptOAuth2ConsentRequestSession } from "@ory/client"
+import { AcceptOAuth2ConsentRequestSession } from "@ory/hydra-client-fetch"
 
 // Sets up csrf protection
 const csrfProtection = csrf({
@@ -25,12 +24,9 @@ const idTokenClaims = (subject: string = "") => ({
 })
 
 router.get("/", csrfProtection, (req, res, next) => {
-  // Parses the URL query
-  const query = url.parse(req.url, true).query
-
   // The challenge is used to fetch information about the consent request from ORY hydraAdmin.
-  const challenge = String(query.consent_challenge)
-  if (!challenge) {
+  const challenge = req.query.consent_challenge
+  if (typeof challenge !== "string" || !challenge) {
     next(new Error("Expected a consent challenge to be set but received none."))
     return
   }
@@ -39,20 +35,17 @@ router.get("/", csrfProtection, (req, res, next) => {
   // accepts the consent request right away if the user has given consent to this
   // app before
   hydraAdmin
-    .adminGetOAuth2ConsentRequest(challenge)
+    .getOAuth2ConsentRequest({ consentChallenge: challenge })
     // This will be called if the HTTP request was successful
-    .then(({ data: body }) => {
+    .then((body) => {
       // If a user has granted this application the requested scope, hydra will tell us to not show the UI.
-      // Any cast needed because the SDK changes are still unreleased.
-      // TODO: Remove in a later version.
-      if (body.skip || (body.client as any)?.skip_consent) {
+      if (body.skip || body.client?.skip_consent) {
         // You can apply logic here, for example grant another scope, or do whatever...
         // ...
 
         // Now it's time to grant the consent request. You could also deny the request if something went terribly wrong
-        console.log(body)
         return hydraAdmin
-          .adminAcceptOAuth2ConsentRequest(challenge, {
+          .acceptOAuth2ConsentRequest({ consentChallenge: challenge, acceptOAuth2ConsentRequest: {
             // We can grant all scopes that have been requested - hydra already checked for us that no additional scopes
             // are requested accidentally.
             grant_scope: body.requested_scope,
@@ -69,8 +62,8 @@ router.get("/", csrfProtection, (req, res, next) => {
               // idToken: { baz: 'bar' },
               id_token: idTokenClaims(body.subject),
             },
-          })
-          .then(({ data: body }) => {
+          } })
+          .then((body) => {
             // All we need to do now is to redirect the user back to hydra!
             res.redirect(String(body.redirect_to))
           })
@@ -102,11 +95,14 @@ router.post("/", csrfProtection, (req, res, next) => {
     // Looks like the consent request was denied by the user
     return (
       hydraAdmin
-        .adminRejectOAuth2ConsentRequest(challenge, {
-          error: "access_denied",
-          error_description: "The resource owner denied the request",
+        .rejectOAuth2ConsentRequest({
+          consentChallenge: challenge,
+          rejectOAuth2Request: {
+            error: "access_denied",
+            error_description: "The resource owner denied the request",
+          },
         })
-        .then(({ data: body }) => {
+        .then((body) => {
           // All we need to do now is to redirect the browser back to hydra!
           res.redirect(String(body.redirect_to))
         })
@@ -144,13 +140,13 @@ router.post("/", csrfProtection, (req, res, next) => {
 
   // Let's fetch the consent request again to be able to set `grantAccessTokenAudience` properly.
   hydraAdmin
-    .adminGetOAuth2ConsentRequest(challenge)
+    .getOAuth2ConsentRequest({ consentChallenge: challenge })
     // This will be called if the HTTP request was successful
-    .then(({ data: body }) => {
+    .then((body) => {
       session.id_token = idTokenClaims(body.subject)
 
       return hydraAdmin
-        .adminAcceptOAuth2ConsentRequest(challenge, {
+        .acceptOAuth2ConsentRequest({ consentChallenge: challenge, acceptOAuth2ConsentRequest: {
           // We can grant all scopes that have been requested - hydra already checked for us that no additional scopes
           // are requested accidentally.
           grant_scope: grantScope,
@@ -172,8 +168,8 @@ router.post("/", csrfProtection, (req, res, next) => {
 
           // When this "remember" sesion expires, in seconds. Set this to 0 so it will never expire.
           remember_for: 3600,
-        })
-        .then(({ data: body }) => {
+        } })
+        .then((body) => {
           // All we need to do now is to redirect the user back to hydra!
           res.redirect(String(body.redirect_to))
         })

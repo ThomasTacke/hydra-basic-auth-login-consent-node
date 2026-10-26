@@ -1,0 +1,27 @@
+extends layout
+
+block content
+  h1 Your account
+  p.subtitle
+    | #{email}
+    if isAdmin
+      |  #[span.badge Admin]
+
+  if saved
+    p.notice(role="status") Saved. Apps take the new name at your next sign-in.
+
+  form(action="/account", method="POST")
+    input(type="hidden", name="_csrf", value=csrfToken)
+    label.field
+      span Display name
+      input(type="text", name="name", value=ownName, placeholder=defaultName, maxlength="100", autocomplete="name")
+      small.hint Leave empty to use #[strong= defaultName] from the mail server.
+    .actions
+      button.primary(type="submit") Save
+
+  .actions.more
+    a.button.secondary(href=passwordUrl) Change password
+    form(action="/account/signout", method="POST")
+      input(type="hidden", name="_csrf", value=csrfToken)
+      button.secondary(type="submit") Sign out everywhere
+    a.button.secondary(href=dashboardUrl) Back to the dashboard

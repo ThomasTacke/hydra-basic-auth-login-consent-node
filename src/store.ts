@@ -42,3 +42,10 @@ export const recordLogin = (sub: string) => {
 }
 
 export const getProfile = (sub: string) => selectProfile.get(sub) as Profile | undefined
+
+const updateName = db.prepare("UPDATE profiles SET name = ? WHERE sub = ?")
+
+// null: use poste.io's name again
+export const setName = (sub: string, name: string | null) => {
+  updateName.run(name, sub)
+}

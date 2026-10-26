@@ -1,20 +1,12 @@
 # hydra-user-and-consent-provider-node
 
-| Env Var         | Description                                   |
-| --------------- | --------------------------------------------- |
-| AUTH_HOSTNAME   | Hostname/URI of Auth Backend                  |
-| AUTH_PORT       | E.g. `443`                                    |
-| AUTH_PATH       | Defaults to `blank`. E.g. `/admin/v1/domains` |
-| AUTH_METHOD     | Defaults to `GET`                             |
-| HYDRA_ADMIN_URL | URL to ory admin instance                     |
-
 ## Environment
 
 | Variable | Purpose |
 |---|---|
 | `HYDRA_ADMIN_URL` | Hydra's admin API, e.g. `http://hydra:4445` |
 | `MOCK_TLS_TERMINATION` | send `X-Forwarded-Proto: https` to Hydra (TLS ends at the reverse proxy) |
-| `AUTH_HOSTNAME`, `AUTH_PORT`, `AUTH_PATH` | poste.io endpoint that checks the password (basic auth); 401 = wrong password |
+| `AUTH_HOSTNAME`, `AUTH_PORT`, `AUTH_PATH`, `AUTH_METHOD` | poste.io endpoint that checks the password with basic auth (method defaults to `GET`); 401 = wrong password |
 | `PROFILE_DB` | profile store, default `/data/profiles.db` (mount a volume at `/data`) |
 | `POSTE_USERS_FILE` | poste.io export (name, admin flag), default `/claims/poste-users.json` |
 | `URLS_SELF_ISSUER`, `URLS_LOGIN` | Hydra's public URL and this app's login URL (shared with Hydra's env) |

@@ -24,7 +24,7 @@
     "debug": "^4.1.1",
     "express": "^4.21.2",
     "morgan": "^1.10.0",
-    "node-fetch": "^2.6.7",
+    "node-fetch": "^3.0.0",
     "pug": "^3.0.3",
     "qrcode": "^1.5.4",
     "querystring": "^0.2.0",

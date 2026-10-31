@@ -33,6 +33,17 @@
       ]
     },
     {
+      "description": "Node image and @types/node move together: types for the Node version the image runs",
+      "matchPackageNames": ["node", "@types/node"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "Node.js major"
+    },
+    {
+      "description": "@types/node: only LTS majors (even numbers), like the image",
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "/^\\d*[02468]\\./"
+    },
+    {
       "description": "Node image: LTS majors only (even numbers)",
       "matchManagers": ["dockerfile"],
       "matchPackageNames": ["node"],

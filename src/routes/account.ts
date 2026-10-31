@@ -11,6 +11,7 @@ import { secretConfigured } from "../secret"
 import { currentStep, encryptSecret, generateRecoveryCodes, generateSecret, hashRecoveryCode, otpauthUrl, verifyCode } from "../totp"
 import { checkSecondFactor, secondFactorError } from "../twofactor"
 import { posteUser } from "../poste"
+import { adminLinks } from "../adminLinks"
 
 const router = express.Router()
 const csrfProtection = csrf({ cookie: { sameSite: "lax" } })
@@ -91,6 +92,7 @@ router.get("/", csrfProtection, (req, res) => {
     ownName: profile?.name || "",
     defaultName,
     isAdmin: Boolean(poste?.admin),
+    adminLinks: poste?.admin ? adminLinks : [],
     orgs: orgsOf(sub),
     saved: req.query.saved === "1",
     done: typeof req.query.done === "string" ? req.query.done : "",

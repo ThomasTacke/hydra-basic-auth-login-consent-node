@@ -316,6 +316,39 @@ ul.codes {
   font-size: 1.05rem;
 }
 
+.admin-links {
+  margin: 24px 0 0;
+}
+
+.admin-links .label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.admin-links ul {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.admin-links li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+}
+
+.admin-links li + li {
+  border-top: 1px solid var(--border);
+}
+
+.admin-links a {
+  color: var(--text);
+  font-weight: 500;
+}
+
 .orgs {
   margin: 24px 0 0;
 }

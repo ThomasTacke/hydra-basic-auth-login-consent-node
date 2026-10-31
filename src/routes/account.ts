@@ -18,7 +18,8 @@ const csrfProtection = csrf({ cookie: { sameSite: "lax" } })
 const clientId = process.env.ACCOUNT_CLIENT_ID || ""
 const clientSecret = process.env.ACCOUNT_CLIENT_SECRET || ""
 // Browser side: Hydra's public URL. Server side: Hydra inside the Docker network.
-const issuer = (process.env.URLS_SELF_ISSUER || "").replace(/\/?$/, "/")
+// Empty when unset, so the check below reports it instead of the app failing to start
+const issuer = process.env.URLS_SELF_ISSUER ? process.env.URLS_SELF_ISSUER.replace(/\/?$/, "/") : ""
 const hydraPublicInternal = (process.env.HYDRA_PUBLIC_URL || "http://hydra:4444").replace(/\/?$/, "/")
 const loginOrigin = process.env.URLS_LOGIN ? new URL(process.env.URLS_LOGIN).origin : ""
 const redirectUri = `${loginOrigin}/account/callback`

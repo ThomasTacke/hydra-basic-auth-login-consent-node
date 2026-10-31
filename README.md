@@ -15,6 +15,7 @@
 | `SECRETS_SYSTEM` | Hydra's system secret; the keys for signed cookies and for encrypting TOTP secrets are derived from it. Changing it ends sessions and invalidates every two-factor setup |
 | `DASHBOARD_URL` | "Back to the dashboard" and "Stay signed in" on the logout page |
 | `PASSWORD_URL` | password change, default `https://<AUTH_HOSTNAME>/admin/my/edit` |
+| `ADMIN_LINKS` | links in the account page's *Administration* section (admins only): `Title\|URL\|Description` entries separated by `;` |
 | `TOTP_ISSUER` | account name in authenticator apps, default: Hydra's host without `auth.` |
 
 ## Account page

@@ -50,9 +50,20 @@ block content
       p Off. With it, signing in asks for a code from your phone after the password, for all apps.
       a.button.secondary(href="/account/totp") Set up two-factor login
 
+  if isAdmin
+    .admin-links
+      span.label Administration
+      ul
+        li
+          a(href="/account/admin") Users and organizations
+          span.hint Organizations, roles, two-factor resets
+        each link in adminLinks
+          li
+            a(href=link.url)= link.title
+            if link.description
+              span.hint= link.description
+
   .actions.more
-    if isAdmin
-      a.button.secondary(href="/account/admin") Manage users and organizations
     a.button.secondary(href=passwordUrl) Change password
     form(action="/account/signout", method="POST")
       input(type="hidden", name="_csrf", value=csrfToken)

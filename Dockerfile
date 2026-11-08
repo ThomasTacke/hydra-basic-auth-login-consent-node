@@ -1,5 +1,5 @@
 # Build: TypeScript -> dist/
-FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS build
+FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8 AS build
 WORKDIR /usr/src/app
 COPY package.json package-lock.json ./
 RUN npm ci --silent
@@ -8,7 +8,7 @@ COPY src ./src
 RUN npm run build
 
 # Run: production dependencies, compiled code, templates and static files only
-FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85
+FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8
 ENV NODE_ENV=production
 WORKDIR /usr/src/app
 COPY package.json package-lock.json ./

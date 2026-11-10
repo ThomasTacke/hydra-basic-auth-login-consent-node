@@ -16,7 +16,10 @@ block content
     label.field
       span Code
       input(type="text", name="code", required, autofocus, inputmode="numeric", autocomplete="one-time-code", maxlength="20", autocapitalize="none", spellcheck="false")
-      small.hint Phone lost? Enter one of your recovery codes instead.
     .actions
       button.primary(type="submit", name="submit", value="Verify") Verify
       button.secondary(type="submit", name="submit", value="Cancel", formnovalidate) Cancel
+
+  //- Outside the label on purpose: password managers (Bitwarden) treat a field whose label
+  //- mentions "recovery" or "backup" as a recovery code field and don't fill the TOTP code.
+  p.hint.after-form Phone lost? Enter one of your recovery codes instead.

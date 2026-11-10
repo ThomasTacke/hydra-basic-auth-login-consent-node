@@ -461,6 +461,10 @@ button.secondary:hover {
   font-size: 0.85rem;
 }
 
+.hint.after-form {
+  margin: 16px 0 0;
+}
+
 .hint strong {
   color: var(--text);
   font-weight: 500;

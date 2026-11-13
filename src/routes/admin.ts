@@ -4,7 +4,7 @@
 import express from "express"
 import csrf from "csurf"
 import { sessionSub } from "./account"
-import { posteUser } from "../poste"
+import { posteUser, posteUsersKnown, similarMailboxes } from "../poste"
 import {
   defaultRole,
   disableTotp,
@@ -39,7 +39,15 @@ router.use((req, res, next) => {
   next()
 })
 
-router.get("/", csrfProtection, (req, res) => {
+// A pre-added address that may be a typo, shown again with a warning instead of saving
+interface Pending {
+  sub: string
+  roles: { [org: string]: string }
+  reason: string
+  suggestions: string[]
+}
+
+const renderAdmin = (req: express.Request, res: express.Response, pending?: Pending) => {
   const orgs = listOrgs()
   const explicit = new Map(listMemberships().map((m) => [`${m.sub} ${m.org}`, m.role]))
   const users = listUsers().map((u) => ({
@@ -56,10 +64,13 @@ router.get("/", csrfProtection, (req, res) => {
     csrfToken: req.csrfToken(),
     orgs,
     users,
+    pending,
     saved: req.query.saved === "1",
     error: typeof req.query.error === "string" ? req.query.error : "",
   })
-})
+}
+
+router.get("/", csrfProtection, (req, res) => renderAdmin(req, res))
 
 // Create or update an organization
 router.post("/orgs", csrfProtection, (req, res) => {
@@ -89,6 +100,22 @@ router.post("/members", csrfProtection, (req, res) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sub)) {
     res.redirect("/account/admin?error=" + encodeURIComponent("That is not a mail address."))
     return
+  }
+  // Adding someone new: an address without a mailbox can never sign in (Hydra checks the
+  // password at poste.io), so it's most likely a typo. Ask before saving it
+  const known = listUsers().some((u) => u.sub === sub)
+  if (req.body.add === "1" && req.body.confirm !== "1" && !known && posteUsersKnown()) {
+    const mailbox = posteUser(sub)
+    const reason = !mailbox
+      ? "There is no mailbox with this address, so it can't sign in."
+      : mailbox.disabled
+        ? "This mailbox is disabled in poste.io, so it can't sign in."
+        : ""
+    if (reason) {
+      const roles = Object.fromEntries(listOrgs().map((org) => [org.id, String(req.body[`role_${org.id}`] ?? "")]))
+      renderAdmin(req, res, { sub, roles, reason, suggestions: mailbox ? [] : similarMailboxes(sub) })
+      return
+    }
   }
   for (const org of listOrgs()) {
     const role = String(req.body[`role_${org.id}`] ?? "")

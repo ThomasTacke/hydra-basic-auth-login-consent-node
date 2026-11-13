@@ -73,22 +73,34 @@ block content
           button.secondary(type="submit", formaction="/account/admin/totp/reset") Reset two-factor login for #{user.sub}
 
   if orgs.length
-    details.add
+    details.add(open=!!pending)
       summary Add someone before their first sign-in
       form.member(action="/account/admin/members", method="POST")
         input(type="hidden", name="_csrf", value=csrfToken)
+        input(type="hidden", name="add", value="1")
+        if pending
+          p.alert(role="alert")
+            strong= pending.sub
+            | : #{pending.reason}
+            if pending.suggestions.length
+              |  Did you mean #{pending.suggestions.join(" or ")}?
         label.field
           span Mail address
-          input(type="email", name="sub", required, placeholder="name@example.org")
+          input(type="email", name="sub", required, placeholder="name@example.org", value=pending ? pending.sub : undefined)
         .roles
           each org in orgs
+            - const chosen = pending ? pending.roles[org.id] : ""
             label.field
               span= org.id
               select(name="role_" + org.id)
-                option(value="") Default
-                option(value="admin") Admin
-                option(value="member") Member
-                option(value="none") Not a member
+                option(value="", selected=chosen === "") Default
+                option(value="admin", selected=chosen === "admin") Admin
+                option(value="member", selected=chosen === "member") Member
+                option(value="none", selected=chosen === "none") Not a member
+        if pending
+          label.check
+            input(type="checkbox", name="confirm", value="1")
+            |  Add anyway (e.g. the mailbox is created later)
         button.primary(type="submit") Add
 
   .actions.more
